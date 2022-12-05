@@ -1,6 +1,5 @@
 import dev.JustRed23.ipscan.Config;
 import dev.JustRed23.ipscan.IPScan;
-import dev.JustRed23.ipscan.fetcher.IFetch;
 import dev.JustRed23.ipscan.scan.ScanResult;
 import dev.JustRed23.ipscan.scan.ScanResultCallback;
 import dev.JustRed23.ipscan.util.CIDRUtils;
@@ -9,8 +8,6 @@ import org.junit.jupiter.api.Test;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,7 +21,7 @@ class IPScanTest {
         InetAddress netmask = CIDRUtils.getNetmaskAddress(24);
 
         scan = new IPScan.Builder()
-                .startAddress(CIDRUtils.getFirstAddress(InetAddress.getLocalHost(), netmask))
+                .startAddress(CIDRUtils.getFirstAddress(InetAddress.getLocalHost()))
                 .netmask(netmask)
                 .config(Config.defaultConfig())
                 .resultCallback(new ScanResultCallback() {

@@ -22,7 +22,7 @@ public class IPScan {
         List<InetAddress> addresses = CIDRUtils.getAllAddressesInRange(start, end, netmask);
 
         CountDownLatch latch = new CountDownLatch(1);
-        Scanner scanner = new Scanner(config.getFetchers(), addresses);
+        Scanner scanner = new Scanner(config, addresses);
         ScanExecutor executor = new ScanExecutor(config, scanner, progressCallback, resultCallback, netmask, latch);
         executor.start();
 

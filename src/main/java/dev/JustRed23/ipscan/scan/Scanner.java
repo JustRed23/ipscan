@@ -1,5 +1,6 @@
 package dev.JustRed23.ipscan.scan;
 
+import dev.JustRed23.ipscan.Config;
 import dev.JustRed23.ipscan.fetcher.IFetch;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,6 +13,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Scanner {
 
+    private final Config config;
+
     private List<IFetch> fetchers;
 
     private List<InetAddress> addresses;
@@ -21,13 +24,15 @@ public class Scanner {
     private final Map<Long, IFetch> activeFetchers = new ConcurrentHashMap<>();
     private final AtomicBoolean interrupted = new AtomicBoolean(false);
 
-    public Scanner(List<IFetch> fetchers, List<InetAddress> addresses) {
-        this.fetchers = fetchers;
+    public Scanner(Config config, List<InetAddress> addresses) {
+        this.config = config;
+        this.fetchers = config.getFetchers();
         this.addresses = addresses;
         this.iterator = addresses.iterator();
     }
 
     public void init() {
+        this.fetchers = config.getFetchers();
         fetchers.forEach(IFetch::init);
         increment = Math.abs(100.0 / addresses.size());
         percentage = 0;
@@ -36,6 +41,7 @@ public class Scanner {
     public void scan(@NotNull ScanResult result) {
         Thread currentThread = Thread.currentThread();
         result.setStatus(ScanResult.Status.SCANNING);
+
         fetchers.forEach(fetch -> {
             try {
                 activeFetchers.put(currentThread.getId(), fetch);
