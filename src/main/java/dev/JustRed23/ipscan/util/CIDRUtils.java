@@ -2,12 +2,13 @@ package dev.JustRed23.ipscan.util;
 
 import org.apache.commons.net.util.SubnetUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Range;
 
 import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class CIDRUtils {
 
@@ -102,6 +103,18 @@ public class CIDRUtils {
 
     /**
      * Returns the first address in the subnet, this address is usually the default gateway
+     * @param address an IP address in the subnet, also used to calculate the subnet
+     * @return the first address in the subnet
+     * @see #getNetworkAddress(InetAddress, InetAddress)
+     */
+    public static @NotNull InetAddress getFirstAddress(@NotNull InetAddress address) {
+        NetworkInterface intf = NetworkUtils.getInterface(address);
+        short bits = Objects.requireNonNull(intf, "No valid network interface found for the address: " + address.getHostAddress()).getInterfaceAddresses().get(0).getNetworkPrefixLength();
+        return getFirstAddress(address, getNetmaskAddress(bits));
+    }
+
+    /**
+     * Returns the first address in the subnet, this address is usually the default gateway
      * @param address an IP address in the subnet
      * @param netmask the netmask address
      * @return the first address in the subnet
@@ -119,6 +132,23 @@ public class CIDRUtils {
         } catch (UnknownHostException e) {
             throw new IllegalArgumentException("Invalid IP address", e);
         }
+    }
+
+    /**
+     * Returns the last usable address in the subnet
+     * <br>
+     * <br>
+     * <b>NOTE:</b> This address is not the broadcast address!
+     * <br>
+     * See {@link #getBroadcastAddress(InetAddress, InetAddress)} for that
+     * @param address an IP address in the subnet, also used to calculate the subnet
+     * @return the last usable address in the subnet
+     * @see #getBroadcastAddress(InetAddress, InetAddress)
+     */
+    public static @NotNull InetAddress getLastAddress(@NotNull InetAddress address) {
+        NetworkInterface intf = NetworkUtils.getInterface(address);
+        short bits = Objects.requireNonNull(intf, "No valid network interface found for the address: " + address.getHostAddress()).getInterfaceAddresses().get(0).getNetworkPrefixLength();
+        return getLastAddress(address, getNetmaskAddress(bits));
     }
 
     /**
