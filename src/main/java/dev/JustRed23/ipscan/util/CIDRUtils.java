@@ -5,8 +5,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
 
@@ -73,6 +75,16 @@ public class CIDRUtils {
     }
 
     /**
+     * Gets the netmask address from the provided interface
+     * @param address an IP address in the subnet
+     * @return the netmask address
+     */
+    public static @NotNull InetAddress getNetmaskAddress(@NotNull InetAddress address) {
+        NetworkInterface intf = NetworkUtils.getInterface(address);
+        return getNetmaskAddress(Objects.requireNonNull(intf, "No valid network interface found for the address: " + address.getHostAddress()).getInterfaceAddresses().get(0).getNetworkPrefixLength());
+    }
+
+    /**
      * Get the netmask address from the number of bits (one octet is 8 bits so 24 -> 255.255.255.0)
      * @param bits the netmask bits
      * @return the netmask address
@@ -108,9 +120,7 @@ public class CIDRUtils {
      * @see #getNetworkAddress(InetAddress, InetAddress)
      */
     public static @NotNull InetAddress getFirstAddress(@NotNull InetAddress address) {
-        NetworkInterface intf = NetworkUtils.getInterface(address);
-        short bits = Objects.requireNonNull(intf, "No valid network interface found for the address: " + address.getHostAddress()).getInterfaceAddresses().get(0).getNetworkPrefixLength();
-        return getFirstAddress(address, getNetmaskAddress(bits));
+        return getFirstAddress(address, getNetmaskAddress(address));
     }
 
     /**
@@ -146,9 +156,7 @@ public class CIDRUtils {
      * @see #getBroadcastAddress(InetAddress, InetAddress)
      */
     public static @NotNull InetAddress getLastAddress(@NotNull InetAddress address) {
-        NetworkInterface intf = NetworkUtils.getInterface(address);
-        short bits = Objects.requireNonNull(intf, "No valid network interface found for the address: " + address.getHostAddress()).getInterfaceAddresses().get(0).getNetworkPrefixLength();
-        return getLastAddress(address, getNetmaskAddress(bits));
+        return getLastAddress(address, getNetmaskAddress(address));
     }
 
     /**
@@ -248,6 +256,40 @@ public class CIDRUtils {
         SubnetUtils utils = new SubnetUtils(getCIDR(address, netmask));
         utils.setInclusiveHostCount(true);
         return utils.getInfo().isInRange(testAddress.getHostAddress());
+    }
+
+    /**
+     * Attempts to fetch the local IP address of the machine, this function skips adapters that contain 'vmware' or 'virtualbox' in the name
+     * @return the local IP address of the machine
+     * @throws UnknownHostException if no IP address could be found
+     */
+    public static @NotNull InetAddress getLocalHost() throws UnknownHostException {
+        //loop through all interfaces and find the first non-loopback address, excluding all vmnet adapters
+        try {
+            Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+            while (networkInterfaces.hasMoreElements()) {
+                NetworkInterface intf = networkInterfaces.nextElement();
+                if (intf.isLoopback() || intf.isVirtual() || intf.isPointToPoint() || !intf.isUp() || intf.getHardwareAddress() == null)
+                    continue;
+
+                String name = intf.getDisplayName().toLowerCase();
+
+                if (name.contains("vmware") || name.contains("virtualbox"))
+                    continue;
+
+                Enumeration<InetAddress> addresses = intf.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    InetAddress address = addresses.nextElement();
+                    if (address.isLoopbackAddress() || address.isLinkLocalAddress() || address.isMulticastAddress())
+                        continue;
+                    return address;
+                }
+            }
+        } catch (SocketException e) {
+            throw new RuntimeException("Failed to get local host", e);
+        }
+        System.err.println("Failed to find local host, falling back to InetAddress.getLocalHost()");
+        return InetAddress.getLocalHost();
     }
 
     /**
