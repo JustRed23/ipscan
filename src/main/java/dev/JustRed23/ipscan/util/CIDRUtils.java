@@ -264,7 +264,6 @@ public class CIDRUtils {
      * @throws UnknownHostException if no IP address could be found
      */
     public static @NotNull InetAddress getLocalHost() throws UnknownHostException {
-        //loop through all interfaces and find the first non-loopback address, excluding all vmnet adapters
         try {
             Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
             while (networkInterfaces.hasMoreElements()) {
