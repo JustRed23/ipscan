@@ -13,6 +13,8 @@ public class IPScan {
 
     private InetAddress start, end, netmask;
 
+    private ScanExecutor executor;
+
     private ScanProgressCallback progressCallback;
     private ScanResultCallback resultCallback;
 
@@ -23,12 +25,17 @@ public class IPScan {
 
         CountDownLatch latch = new CountDownLatch(1);
         Scanner scanner = new Scanner(config, addresses);
-        ScanExecutor executor = new ScanExecutor(config, scanner, progressCallback, resultCallback, netmask, latch);
+        executor = new ScanExecutor(config, scanner, progressCallback, resultCallback, netmask, latch);
         executor.start();
 
         latch.await();
 
         Thread.sleep(1000);
+    }
+
+    public void stop() {
+        if (executor != null)
+            executor.kill();
     }
 
     public InetAddress getStart() {
