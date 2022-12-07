@@ -4,11 +4,12 @@ import dev.JustRed23.ipscan.scan.ScanResult;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 public class LinuxMACFetcher extends AbstractMACFetcher {
 
-    private static final Path ARP_TABLE = Path.of("/proc/net/arp");
+    private static final Path ARP_TABLE = Paths.get("/proc/net/arp");
     private final int macLength = 17;
     private int flagsIndex;
     private int macIndex;
