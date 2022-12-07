@@ -18,30 +18,36 @@ class IPScanTest {
 
     @BeforeAll
     static void setup() throws UnknownHostException {
-        InetAddress netmask = CIDRUtils.getNetmaskAddress(24);
+        InetAddress localHost = CIDRUtils.getLocalHost();
+        InetAddress netmask = CIDRUtils.getNetmaskAddress(localHost);
 
         scan = new IPScan.Builder()
-                .startAddress(CIDRUtils.getFirstAddress(InetAddress.getLocalHost()))
+                .startAddress(CIDRUtils.getFirstAddress(localHost, netmask))
                 .netmask(netmask)
                 .config(Config.defaultConfig())
-                .resultCallback(new ScanResultCallback() {
-                    public void onPrepareResult(ScanResult result) {}
+                .resultCallback(result -> {
+                    if (result.getMacAddress() == null || result.isLocalhost())
+                        return;
 
-                    public void onScanResult(ScanResult result) {
-                        if (result.getMacAddress() == null)
-                            return;
-
-                        System.out.println("Hit: " + result.getAddress().getHostAddress() + " - " + result.getMacAddress());
-                    }
+                    System.out.println("Hit: " + result.getAddress().getHostAddress() + " - " + result.getMacAddress());
                 })
                 .build();
     }
 
     @Test
     void testScan() {
-        assertEquals("192.168.0.1", scan.getStart().getHostAddress());
-        assertEquals("192.168.0.254", scan.getEnd().getHostAddress());
-        assertEquals("255.255.255.0", scan.getNetmask().getHostAddress());
         assertDoesNotThrow(() -> scan.scan());
+    }
+
+    @Test
+    void checkCIDR() throws UnknownHostException {
+        InetAddress localhost = CIDRUtils.getLocalHost();
+        InetAddress netmask = CIDRUtils.getNetmaskAddress(localhost);
+
+        System.out.println("Localhost: " + localhost.getHostAddress());
+        System.out.println("Begin ip:  " + CIDRUtils.getFirstAddress(localhost).getHostAddress());
+        System.out.println("End ip:    " + CIDRUtils.getLastAddress(localhost).getHostAddress());
+        System.out.println("Broadcast: " + CIDRUtils.getBroadcastAddress(localhost, netmask).getHostAddress());
+        System.out.println("Netmask:   " + netmask.getHostAddress());
     }
 }

@@ -59,9 +59,6 @@ public class ScanExecutor extends Thread implements ThreadFactory {
                         continue;
 
                     ScanResult result = new ScanResult(cur);
-                    if (resultCallback != null)
-                        resultCallback.onPrepareResult(result);
-
                     ScanTask scanTask = new ScanTask(result);
                     service.execute(scanTask);
                 }
